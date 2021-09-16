@@ -26,7 +26,7 @@ export async function make_request<T>({ sg_host, sg_token }: SGCreds, query: str
     if (is_error(j)) {
       throw new Error('Unexpected response from Sourcegraph API: ' + t)
     } else {
-      if (j.data) {
+      if (!j.data) {
         throw new Error('Unexpected response from Sourcegraph API: ' + t)
       }
       return j as T

@@ -2,7 +2,123 @@ export type RunSearchErrorResponse = {
   errors: { message: string, locations: { line: number, column: number }[] }[]
 }
 
-export function search(query: string) {
+export const LIST_ALL_REPOS = `query {
+  search(query: "type:repo") {
+    results {
+      repositories {
+        name
+      }
+   }
+ }
+}`
+
+export type ListAllRepos = {
+  data: {
+    search: {
+      results: {
+        repositories: {
+          name: string
+        }[]
+      }
+    }
+  }
+}
+
+export function git_blame(repo: string, query: string) {
+  return `query {
+  search(query: "${query} repo:${repo}@*refs/heads/* type:diff select:commit.diff.added ") {
+    results {
+      results {
+        ... on CommitSearchResult {
+          commit {
+            abbreviatedOID
+            author {
+              date
+              person {
+                name
+                email
+              }
+            }
+          }
+      	}
+      }
+      repositories {
+        branches {
+          nodes {
+            name
+          }
+        }
+        name
+      }
+    }
+  }
+}`
+}
+
+export type GitBlame = {
+  data: {
+    search: {
+      results: {
+        results: {
+          commit: {
+            abbreviatedOID: string,
+            author: {
+              date: string,
+              person: {
+                name: string,
+                email: string
+              }
+            }
+          }
+        }[]
+        repositories: {
+          branches: {
+            nodes: {
+              name: string
+            }[]
+          },
+          name: string
+        }[]
+      }
+    }
+  }
+}
+
+export function list_matching_branches(repo: string, query: string) {
+  return `query {
+  search(query: "${query} repo:${repo}@*refs/heads/*") {
+    results {
+      repositories {
+        branches {
+          nodes {
+            name
+          }
+        }
+        name
+      }
+    }
+  }
+}`
+}
+
+export type ListMatchingBranches = {
+  data: {
+    search: {
+      results: {
+        repositories: {
+          branches: {
+            nodes: {
+              name: string
+            }[]
+          },
+          name: string
+        }[]
+      }
+    }
+  }
+}
+
+export function count_search(query: string) {
   return `query {
   search(query: "${query}") {
     results {

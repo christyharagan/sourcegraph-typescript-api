@@ -1,8 +1,51 @@
 import { GitHubConnection } from './github_schema'
 import { make_request, SGCreds } from './request'
-import { FetchAllEvents, FETCH_ALL_EVENTS, GetExternalServices, GET_EXTERNAL_SERVICES, get_repo_permission_sync, RepositoryPermissionSync, schedule_repo_sync, update_external_service } from './schema'
+import { FetchAllEvents, FETCH_ALL_EVENTS, GetExternalServices, GET_EXTERNAL_SERVICES, get_repo_permission_sync, GitBlame, ListAllRepos, ListMatchingBranches, LIST_ALL_REPOS, list_matching_branches, RepositoryPermissionSync, schedule_repo_sync, update_external_service, git_blame as _git_blame } from './schema'
 
 export type Credentials = SGCreds
+
+export async function git_blame(creds: SGCreds, repo: string, query: string) {
+  const r = await make_request<GitBlame>(creds, _git_blame(repo, query))
+  const ret: {
+    repos_and_branches: { [repo: string]: string[] }
+    commits: {
+      id: string
+      date: string
+      person: {
+        name: string
+        email: string
+      }
+    }[]
+  } = {
+    repos_and_branches: {},
+    commits: []
+  }
+  r.data.search.results.repositories.forEach(r => {
+    ret.repos_and_branches[r.name] = r.branches.nodes.map(n => n.name)
+  })
+  r.data.search.results.results.forEach(r => {
+    ret.commits.push({
+      id: r.commit.abbreviatedOID,
+      date: r.commit.author.date,
+      person: r.commit.author.person
+    })
+  })
+  return ret
+}
+
+export async function list_all_repos(creds: SGCreds) {
+  const repos = await make_request<ListAllRepos>(creds, LIST_ALL_REPOS)
+  return repos.data.search.results.repositories.map(r => r.name)
+}
+
+export async function find_matching_branches(creds: SGCreds, repo: string, query: string) {
+  const r = await make_request<ListMatchingBranches>(creds, list_matching_branches(repo, query))
+  const repos: { [repo: string]: string[] } = {}
+  r.data.search.results.repositories.forEach(r => {
+    repos[r.name] = r.branches.nodes.map(n => n.name)
+  })
+  return repos
+}
 
 export async function add_github_repositories(creds: SGCreds, code_host_id: string, repos: string[]) {
   const config = await get_github_config(creds, code_host_id)
