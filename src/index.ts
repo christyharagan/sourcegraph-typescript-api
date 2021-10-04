@@ -1,8 +1,45 @@
 import { GitHubConnection } from './github_schema'
 import { make_request, SGCreds } from './request'
-import { FetchAllEvents, FETCH_ALL_EVENTS, GetExternalServices, GET_EXTERNAL_SERVICES, get_repo_permission_sync, GitBlame, ListAllRepos, ListMatchingBranches, LIST_ALL_REPOS, list_matching_branches, RepositoryPermissionSync, schedule_repo_sync, update_external_service, git_blame as _git_blame } from './schema'
+import { FetchAllEvents, FETCH_ALL_EVENTS, GetExternalServices, GET_EXTERNAL_SERVICES, get_repo_permission_sync, GitBlame, ListAllRepos, ListMatchingBranches, LIST_ALL_REPOS, list_matching_branches, RepositoryPermissionSync, schedule_repo_sync, update_external_service, git_blame as _git_blame, GetDefsOrRefs, get_defs_or_refs, GetUserId, get_user_id as _get_user_id, create_code_monitor as _create_code_monitor, delete_code_monitor as _delete_code_monitor, get_user_code_monitors as _get_user_code_monitors, GetUserCodeMonitors, CreateCodeMonitor } from './schema'
 
 export type Credentials = SGCreds
+
+export async function get_definitions(creds: SGCreds, repo: string, commit: string, path: string, line: string, character: string) {
+  const r = await make_request<GetDefsOrRefs<'definitions'>>(creds, get_defs_or_refs(repo, commit, path, line, character, 'definitions'))
+  return r.data.repository.commit.blob.lsif.definitions.nodes
+}
+
+export async function get_references(creds: SGCreds, repo: string, commit: string, path: string, line: string, character: string) {
+  const r = await make_request<GetDefsOrRefs<'references'>>(creds, get_defs_or_refs(repo, commit, path, line, character, 'references'))
+  return r.data.repository.commit.blob.lsif.references.nodes
+}
+
+export async function get_user_id(creds: SGCreds, by: 'username' | 'email', value: string) {
+  const r = await make_request<GetUserId>(creds, _get_user_id(by, value))
+  return r.data.user.id
+}
+
+export async function get_user_code_monitors(creds: SGCreds, by: 'username' | 'email', value: string) {
+  const r = await make_request<GetUserCodeMonitors>(creds, _get_user_code_monitors(by, value))
+  return r.data.user.monitors.nodes.map(n => ({
+    description: n.description,
+    trigger: n.trigger,
+    actions: n.actions.nodes.map(n => ({
+      header: n.header,
+      recipients: n.recipients.nodes
+    }))
+  }))
+}
+
+export async function create_code_monitor(creds: SGCreds, user_or_org_id: string, description: string, enabled: boolean, query: string, email_header?: string) {
+  const r = await make_request<CreateCodeMonitor>(creds, _create_code_monitor(user_or_org_id, description, enabled, query, email_header))
+  return r.data.createCodeMonitor.id
+}
+
+export async function delete_code_monitor(creds: SGCreds, monitor_id: string) {
+  await make_request<null>(creds, _delete_code_monitor(monitor_id))
+  return
+}
 
 export async function git_blame(creds: SGCreds, repo: string, query: string) {
   const r = await make_request<GitBlame>(creds, _git_blame(repo, query))

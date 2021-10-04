@@ -2,6 +2,194 @@ export type RunSearchErrorResponse = {
   errors: { message: string, locations: { line: number, column: number }[] }[]
 }
 
+function sanitise_query(query: string) {
+  return JSON.stringify({ query }).replace('{"query"', '{query')
+}
+
+export function delete_code_monitor(monitor_id: string) {
+  return `mutation DeleteMonitor {
+  deleteCodeMonitor(id: "${monitor_id}") {
+		alwaysNil
+  }
+}`
+}
+
+export function get_user_code_monitors(by: 'username' | 'email', value: string) {
+  return `query {
+  user(${by}: "${value}") {
+    monitors {
+      nodes {
+        description
+        trigger {
+          ... on MonitorQuery {
+          	query
+        	}
+        }
+        actions {
+          nodes {
+            ... on MonitorEmail {
+              header
+              recipients {
+                nodes {
+                  id
+                  namespaceName
+								}
+              }
+            }
+          }
+        }
+      }
+    }
+  }
+}`
+}
+
+export type GetUserCodeMonitors = {
+  data: {
+    user: {
+      monitors: {
+        nodes: {
+          description: string
+          trigger: {
+            query: string
+          }
+          actions: {
+            nodes: {
+              header: string
+              recipients: {
+                nodes: {
+                  id: string
+                  namespaceName: string
+                }[]
+              }
+            }[]
+          }
+        }[]
+      }
+    }
+  }
+}
+
+export function create_code_monitor(user_or_org_id: string, description: string, enabled: boolean, query: string, email_header?: string) {
+  return `mutation CreateMonitor {
+  createCodeMonitor(
+    monitor: {
+    	namespace: "${user_or_org_id}",
+    	description: "${description}", 
+    	enabled: ${enabled}}, 
+    trigger: {${sanitise_query(query)}},
+    actions: [{email:{
+      enabled: true, 
+      priority: NORMAL, 
+      recipients:["${user_or_org_id}"], 
+      header: "${email_header || ''}"
+    }}]
+  ) {
+		id
+  }
+}`
+}
+
+export type CreateCodeMonitor = {
+  data: {
+    createCodeMonitor: {
+      id: string
+    }
+  }
+}
+
+export function get_user_id(by: 'username' | 'email', value: string) {
+  return `query {
+  user(${by}: "${value}") {
+    id
+  }
+}`
+}
+
+export type GetUserId = {
+  data: {
+    user: {
+      id: string
+    }
+  }
+}
+
+export function get_defs_or_refs(repo: string, commit: string, path: string, line: string, character: string, defs_or_refs: 'definitions' | 'references') {
+  return `query DefinitionAndHover {
+  repository(name: "${repo}") {
+    commit(rev: "${commit}") {
+      blob(path: "${path}") {
+        lsif {
+          ${defs_or_refs}(line: ${line}, character: ${character}) {
+            nodes {
+              url
+              resource {
+                path
+                repository {
+                  name
+                }
+                commit {
+                  abbreviatedOID
+                  oid
+                }
+              }
+              range {
+                start {
+                  line
+                  character
+                }
+                end {
+                  line
+                  character
+                }
+              }
+            }
+          }
+        }
+      }
+    }
+  }
+}`
+}
+
+export type GetDefsOrRefs<DefsOrRefs extends 'definitions' | 'references'> = {
+  data: {
+    repository: {
+      commit: {
+        blob: {
+          lsif: {
+            [prop in DefsOrRefs]: {
+              nodes: {
+                url: string
+                resource: {
+                  path: string
+                  repository: {
+                    name: string
+                  }
+                  commit: {
+                    oid: string
+                    abbreviatedOID: string
+                  }
+                }
+                range: {
+                  start: {
+                    line: number
+                    character: number
+                  }
+                  end: {
+                    line: number
+                    character: number
+                  }
+                }
+              }[]
+            }
+          }
+        }
+      }
+    }
+  }
+}
+
 export const LIST_ALL_REPOS = `query {
   search(query: "type:repo") {
     results {
@@ -26,7 +214,7 @@ export type ListAllRepos = {
 
 export function git_blame(repo: string, query: string) {
   return `query {
-  search(query: "${query} repo:${repo}@*refs/heads/* type:diff select:commit.diff.added ") {
+  search(${sanitise_query(query + `repo:${repo}@*refs/heads/* type:diff select:commit.diff.added`)}) {
     results {
       results {
         ... on CommitSearchResult {
@@ -86,7 +274,7 @@ export type GitBlame = {
 
 export function list_matching_branches(repo: string, query: string) {
   return `query {
-  search(query: "${query} repo:${repo}@*refs/heads/*") {
+  search(${sanitise_query(query + ` repo:${repo}@*refs/heads/*`)}) {
     results {
       repositories {
         branches {
@@ -120,7 +308,7 @@ export type ListMatchingBranches = {
 
 export function count_search(query: string) {
   return `query {
-  search(query: "${query}") {
+  search(${sanitise_query(query)}) {
     results {
       matchCount
     }
@@ -140,11 +328,11 @@ export const GET_EXTERNAL_SERVICES = `query {
 
 export function update_external_service(id: string, config: string) {
   const config_str = JSON.stringify({ config })
-  const pre = '{"config"'
+  const pre = '{config'
   const config_strip_end = config_str.substring(0, config_str.length - 1)
   const config_strip_start = config_strip_end.substring(pre.length)
   return `mutation Update {
-  updateExternalService(id: "${id}", config: ${config_strip_start}) {
+  updateExternalService(id: "${id}", config: "${config_strip_start}") {
     updatedAt
   }
 }`
