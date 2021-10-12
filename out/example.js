@@ -32,3 +32,4 @@ _1.list_all_repos(creds).then(repos => {
         });
     });
 });
+//# sourceMappingURL=example.js.map

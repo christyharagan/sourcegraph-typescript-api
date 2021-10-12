@@ -6,3 +6,4 @@
  * and run json-schema-to-typescript to regenerate this file.
  */
 Object.defineProperty(exports, "__esModule", { value: true });
+//# sourceMappingURL=github_schema.js.map

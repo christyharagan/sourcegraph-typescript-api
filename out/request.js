@@ -36,3 +36,4 @@ async function make_request({ sg_host, sg_token }, query) {
     }
 }
 exports.make_request = make_request;
+//# sourceMappingURL=request.js.map
