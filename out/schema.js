@@ -1,6 +1,6 @@
 "use strict";
 Object.defineProperty(exports, "__esModule", { value: true });
-exports.FETCH_ALL_EVENTS = exports.get_repo_permission_sync = exports.schedule_repo_sync = exports.update_external_service = exports.GET_EXTERNAL_SERVICES = exports.count_search = exports.list_matching_branches = exports.git_blame = exports.LIST_ALL_REPOS = exports.get_defs_or_refs = exports.get_user_id = exports.create_code_monitor = exports.get_user_code_monitors = exports.delete_code_monitor = void 0;
+exports.FETCH_ALL_EVENTS = exports.get_repo_permission_sync = exports.schedule_repo_sync = exports.update_external_service = exports.GET_EXTERNAL_SERVICES = exports.count_search = exports.list_matching_branches = exports.git_blame = exports.LIST_ALL_REPOS = exports.get_defs_or_refs = exports.get_user_id = exports.create_code_monitor = exports.get_user_code_monitors = exports.get_users = exports.delete_code_monitor = void 0;
 function sanitise_query(query) {
     return JSON.stringify({ query }).replace('{"query"', '{query');
 }
@@ -12,6 +12,22 @@ function delete_code_monitor(monitor_id) {
 }`;
 }
 exports.delete_code_monitor = delete_code_monitor;
+function get_users() {
+    return `query {
+  users {
+    nodes {
+      id
+      username
+      displayName
+      siteAdmin
+      emails {
+        email
+      }
+		}
+  }
+}`;
+}
+exports.get_users = get_users;
 function get_user_code_monitors(by, value) {
     return `query {
   user(${by}: "${value}") {

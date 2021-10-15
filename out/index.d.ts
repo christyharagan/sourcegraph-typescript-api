@@ -2,6 +2,13 @@ import { GitHubConnection } from './github_schema';
 import { SGCreds } from './request';
 import { FetchAllEvents } from './schema';
 export declare type Credentials = SGCreds;
+export declare function get_users(creds: SGCreds): Promise<{
+    id: string;
+    displayName: string;
+    username: string;
+    siteAdmin: boolean;
+    emails: string[];
+}[]>;
 export declare function get_definitions(creds: SGCreds, repo: string, commit: string, path: string, line: string, character: string): Promise<{
     url: string;
     resource: {

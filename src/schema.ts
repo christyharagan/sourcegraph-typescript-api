@@ -14,6 +14,38 @@ export function delete_code_monitor(monitor_id: string) {
 }`
 }
 
+export function get_users() {
+  return `query {
+  users {
+    nodes {
+      id
+      username
+      displayName
+      siteAdmin
+      emails {
+        email
+      }
+		}
+  }
+}`
+}
+
+export type GetUsers = {
+  data: {
+    users: {
+      nodes: {
+        id: string
+        username: string
+        displayName: string
+        siteAdmin: boolean,
+        emails: {
+          email: string
+        }[]
+      }[]
+    }
+  }
+}
+
 export function get_user_code_monitors(by: 'username' | 'email', value: string) {
   return `query {
   user(${by}: "${value}") {

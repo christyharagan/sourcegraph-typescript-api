@@ -8,6 +8,22 @@ export declare type RunSearchErrorResponse = {
     }[];
 };
 export declare function delete_code_monitor(monitor_id: string): string;
+export declare function get_users(): string;
+export declare type GetUsers = {
+    data: {
+        users: {
+            nodes: {
+                id: string;
+                username: string;
+                displayName: string;
+                siteAdmin: boolean;
+                emails: {
+                    email: string;
+                }[];
+            }[];
+        };
+    };
+};
 export declare function get_user_code_monitors(by: 'username' | 'email', value: string): string;
 export declare type GetUserCodeMonitors = {
     data: {

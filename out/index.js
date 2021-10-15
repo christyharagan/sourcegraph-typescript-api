@@ -1,8 +1,19 @@
 "use strict";
 Object.defineProperty(exports, "__esModule", { value: true });
-exports.fetch_all_events = exports.find_users_who_accessed_repos = exports.update_code_host_config = exports.get_code_host_configs = exports.get_code_host_config = exports.get_external_services = exports.get_github_configs = exports.get_github_config = exports.get_code_host_id = exports.has_repo_permissions_synced = exports.sync_repo = exports.remove_github_repositories = exports.add_github_repositories = exports.find_matching_branches = exports.list_all_repos = exports.git_blame = exports.delete_code_monitor = exports.create_code_monitor = exports.get_user_code_monitors = exports.get_user_id = exports.get_references = exports.get_definitions = void 0;
+exports.fetch_all_events = exports.find_users_who_accessed_repos = exports.update_code_host_config = exports.get_code_host_configs = exports.get_code_host_config = exports.get_external_services = exports.get_github_configs = exports.get_github_config = exports.get_code_host_id = exports.has_repo_permissions_synced = exports.sync_repo = exports.remove_github_repositories = exports.add_github_repositories = exports.find_matching_branches = exports.list_all_repos = exports.git_blame = exports.delete_code_monitor = exports.create_code_monitor = exports.get_user_code_monitors = exports.get_user_id = exports.get_references = exports.get_definitions = exports.get_users = void 0;
 const request_1 = require("./request");
 const schema_1 = require("./schema");
+async function get_users(creds) {
+    const r = await request_1.make_request(creds, schema_1.get_users());
+    return r.data.users.nodes.map(n => ({
+        id: n.id,
+        displayName: n.displayName,
+        username: n.username,
+        siteAdmin: n.siteAdmin,
+        emails: n.emails.map(e => e.email)
+    }));
+}
+exports.get_users = get_users;
 async function get_definitions(creds, repo, commit, path, line, character) {
     const r = await request_1.make_request(creds, schema_1.get_defs_or_refs(repo, commit, path, line, character, 'definitions'));
     return r.data.repository.commit.blob.lsif.definitions.nodes;

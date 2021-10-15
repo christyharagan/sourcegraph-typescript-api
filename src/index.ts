@@ -1,8 +1,19 @@
 import { GitHubConnection } from './github_schema'
 import { make_request, SGCreds } from './request'
-import { FetchAllEvents, FETCH_ALL_EVENTS, GetExternalServices, GET_EXTERNAL_SERVICES, get_repo_permission_sync, GitBlame, ListAllRepos, ListMatchingBranches, LIST_ALL_REPOS, list_matching_branches, RepositoryPermissionSync, schedule_repo_sync, update_external_service, git_blame as _git_blame, GetDefsOrRefs, get_defs_or_refs, GetUserId, get_user_id as _get_user_id, create_code_monitor as _create_code_monitor, delete_code_monitor as _delete_code_monitor, get_user_code_monitors as _get_user_code_monitors, GetUserCodeMonitors, CreateCodeMonitor } from './schema'
+import { FetchAllEvents, FETCH_ALL_EVENTS, GetExternalServices, GET_EXTERNAL_SERVICES, get_repo_permission_sync, GitBlame, ListAllRepos, ListMatchingBranches, LIST_ALL_REPOS, list_matching_branches, RepositoryPermissionSync, schedule_repo_sync, update_external_service, git_blame as _git_blame, GetDefsOrRefs, get_defs_or_refs, GetUserId, get_user_id as _get_user_id, create_code_monitor as _create_code_monitor, delete_code_monitor as _delete_code_monitor, get_user_code_monitors as _get_user_code_monitors, GetUserCodeMonitors, CreateCodeMonitor, GetUsers, get_users as _get_users } from './schema'
 
 export type Credentials = SGCreds
+
+export async function get_users(creds: SGCreds) {
+  const r = await make_request<GetUsers>(creds, _get_users())
+  return r.data.users.nodes.map(n => ({
+    id: n.id,
+    displayName: n.displayName,
+    username: n.username,
+    siteAdmin: n.siteAdmin,
+    emails: n.emails.map(e => e.email)
+  }))
+}
 
 export async function get_definitions(creds: SGCreds, repo: string, commit: string, path: string, line: string, character: string) {
   const r = await make_request<GetDefsOrRefs<'definitions'>>(creds, get_defs_or_refs(repo, commit, path, line, character, 'definitions'))
